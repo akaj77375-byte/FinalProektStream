@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class HospitalDaoImpl implements HospitalDao {
-    HospitalDao hospitalDao=new HospitalDaoImpl();
+
     @Override
     public String addHospital(Hospital hospital) {
         hospital.setId(GenId.getHospitalId());
@@ -56,11 +56,11 @@ public class HospitalDaoImpl implements HospitalDao {
     }
 
     @Override
-    public Map<Long, Hospital> getAllHospitalByAddress(String address) {
+    public Map<String, Hospital> getAllHospitalByAddress(String address) {
         return DB.hospitals.stream()
                 .filter(h -> h.getAddress().equalsIgnoreCase(address))
                 .collect(Collectors.toMap(
-                        Hospital::getId,
+                        Hospital::getAddress,
                         h -> h
                 ));
     }

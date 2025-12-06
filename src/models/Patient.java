@@ -6,13 +6,13 @@ public class Patient {
     private Long id;
     private String firstName;
     private String lastName;
-    private int age;
+    private Integer age;
     private Gender gender;
 
     public Patient() {
     }
 
-    public Patient(Long id, String firstName, String lastName, int age, Gender gender) {
+    public Patient(Long id, String firstName, String lastName, Integer age, Gender gender) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -44,7 +44,7 @@ public class Patient {
         this.lastName = lastName;
     }
 
-    public int getAge() {
+    public Integer getAge() {
         return age;
     }
 
