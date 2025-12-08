@@ -69,7 +69,7 @@ public class Main {
                                     String name = safeString();
                                     System.out.println("Адрес:");
                                     String address = safeString();
-                                    Hospital h = new Hospital(
+                                                                 Hospital h = new Hospital(
                                             GenId.getHospitalId(),
                                             name, address,
                                             new ArrayList<>(),

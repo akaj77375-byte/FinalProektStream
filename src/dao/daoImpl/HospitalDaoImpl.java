@@ -14,7 +14,7 @@ public class HospitalDaoImpl implements HospitalDao {
 
     @Override
     public String addHospital(Hospital hospital) {
-        hospital.setId(GenId.getHospitalId());
+
         DB.hospitals.add(hospital);
         return "Hospital successfully added";
     }

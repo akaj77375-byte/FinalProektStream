@@ -11,7 +11,7 @@ public class DepartmentServiceIMpl implements DepartmentService {
     DepartmentDao departmentDao=new DepartmentDaoImpl();
 
     @Override
-    public List<Department> getAllDepartmentByHospital(Long hospitalId) {
+    public  List<Department> getAllDepartmentByHospital(Long hospitalId) {
         if (hospitalId == null || hospitalId <= 0) {
             throw new IllegalArgumentException("Некорректный ID госпиталя!");
         }
