@@ -2,6 +2,7 @@ package dao.daoImpl;
 
 import dao.HospitalDao;
 import dao.PatientDao;
+import database.DB;
 import database.GenId;
 import models.Hospital;
 import models.Patient;
@@ -14,24 +15,23 @@ public class PatientDaoImpl implements PatientDao {
     HospitalDao hospitalDao = new HospitalDaoImpl();
 
     @Override
-    public String addPatientsToHospital(Long id, List<Patient> patients) {
-        Hospital hospital = hospitalDao.findHospitalById(id);
+    public String addPatientsToHospital(Long hospitalId, List<Patient> patients) {
+        Hospital hospital = DB.hospitals.stream()
+                .filter(h -> h.getId().equals(hospitalId))
+                .findFirst()
+                .orElse(null);
+
         if (hospital == null) return "Hospital not found";
-
-
-        patients.forEach(p -> p.setId(GenId.getPatientId(id)));
-
+        patients.stream().forEach(patient -> patient.setId(GenId.getPatientId(hospitalId)));
         hospital.getPatients().addAll(patients);
-
-        return "Patients successfully added";
+        return "Patients added: " + patients.size();
     }
 
     @Override
     public Patient getPatientById(Long hospitalId, Long id) {
-        Hospital hospital = hospitalDao.findHospitalById(hospitalId);
-        if (hospital == null) return null;
-
-        return hospital.getPatients().stream()
+        return DB.hospitals.stream()
+                .filter(h -> h.getId().equals(hospitalId))
+                .flatMap(h -> h.getPatients().stream())
                 .filter(p -> p.getId().equals(id))
                 .findFirst()
                 .orElse(null);
@@ -39,70 +39,70 @@ public class PatientDaoImpl implements PatientDao {
 
     @Override
     public Map<Long, Patient> getPatientByAge(Long hospitalId, Integer age) {
-        Hospital hospital = hospitalDao.findHospitalById(hospitalId);
-        if (hospital == null) return Map.of();
+        if (hospitalId == null || age == null) {
+            return Map.of();
+        }
 
-
-        return hospital.getPatients().stream()
-                .filter(p -> p.getAge() == age)
+        return DB.hospitals.stream()
+                .filter(h -> h.getId() != null && h.getId().equals(hospitalId))
+                .flatMap(h -> {
+                    if (h.getPatients() == null) return Stream.<Patient>empty();
+                    return h.getPatients().stream();
+                })
+                .filter(p -> p.getAge() != null && p.getAge().equals(age))
                 .collect(Collectors.toMap(
-                        Patient::getId,
-                        p -> p
+                        p -> (long) p.getId().intValue(),
+                        p -> p,
+                        (existing, replacement) -> existing
                 ));
     }
 
     @Override
     public List<Patient> sortPatientsByAge(Long hospitalId, String ascOrDesc) {
-        Hospital hospital = hospitalDao.findHospitalById(hospitalId);
-        if (hospital == null) return List.of();
-
-        Stream<Patient> stream = hospital.getPatients().stream();
-
-        if (ascOrDesc.equalsIgnoreCase("asc")) {
-            return stream.sorted(Comparator.comparing(Patient::getAge)).toList();
-        } else if (ascOrDesc.equalsIgnoreCase("desc")) {
-            return stream.sorted(Comparator.comparing(Patient::getAge).reversed()).toList();
-        }
-
-        return List.of();
+        return DB.hospitals.stream()
+                .filter(h -> h.getId().equals(hospitalId))
+                .flatMap(h -> h.getPatients().stream())
+                .sorted((p1, p2) -> "desc".equalsIgnoreCase(ascOrDesc)
+                        ? Integer.compare(p2.getAge(), p1.getAge())
+                        : Integer.compare(p1.getAge(), p2.getAge()))
+                .toList();
     }
 
     @Override
     public String add(Long hospitalId, Patient patient) {
-        Hospital hospital = hospitalDao.findHospitalById(hospitalId);
-        if (hospital == null) return "Hospital not found";
+        Hospital hospital = DB.hospitals.stream()
+                .filter(h -> h.getId().equals(hospitalId))
+                .findFirst()
+                .orElse(null);
 
-        patient.setId(GenId.getPatientId(hospitalId));
+
+        assert hospital != null;
         hospital.getPatients().add(patient);
-
         return "Patient added";
     }
 
     @Override
     public void removeById(Long hospitalId, Long id) {
-        Hospital hospital = hospitalDao.findHospitalById(hospitalId);
-        if (hospital == null) return;
+         DB.hospitals.stream()
+                .filter(h -> h.getId().equals(hospitalId))
+                .findFirst()
+                .orElse(null);
 
-        hospital.getPatients().removeIf(p -> p.getId().equals(id));
+
+
     }
 
     @Override
     public String updateById(Long hospitalId, Long id, Patient patient) {
-        Hospital hospital = hospitalDao.findHospitalById(hospitalId);
-        if (hospital == null) return "Hospital not found";
-
-        Patient existing = hospital.getPatients().stream()
-                .filter(p -> p.getId().equals(id))  // ✔ было p.getId()
+        DB.hospitals.stream()
+                .filter(h -> h.getId().equals(hospitalId))
+                .flatMap(h -> h.getPatients().stream())
+                .filter(p -> p.getId().equals(id))
                 .findFirst()
-                .orElse(null);
-
-        if (existing == null) return "Patient not found";
-
-        existing.setFirstName(patient.getFirstName());
-        existing.setLastName(patient.getLastName());
-        existing.setAge(patient.getAge());
-        existing.setGender(patient.getGender());
-
-        return "Patient updated";
+                .ifPresent(p -> {
+                    p.setLastName(patient.getLastName());
+                    p.setAge(patient.getAge());
+                });
+        return "";
     }
 }
